@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,36 +12,57 @@
             margin: 0;
             padding: 0;
         }
+
         header {
             background-color: #FFD700;
             padding: 20px;
             text-align: center;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
+
         header h1 {
             margin: 0;
-            font-size: 2rem;
+            font-size: 2.5rem;
             color: #333;
         }
+
         .container {
+            max-width: 960px;
+            margin: 30px auto;
+            padding: 0 20px;
             text-align: center;
-            margin: 20px;
         }
-        .calendar {
-            margin-bottom: 20px;
+
+        .inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: center;
         }
-        input[type="date"] {
+
+        .inputs label {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        input[type="date"],
+        input[type="text"] {
             padding: 10px;
-            border: 1px solid #ddd;
+            font-size: 1rem;
+            border: 1px solid #ccc;
             border-radius: 5px;
-            font-size: 16px;
+            width: 250px;
         }
+
         .week-weather {
             display: flex;
             justify-content: center;
             gap: 20px;
             flex-wrap: wrap;
         }
+
         .day-card {
             background: white;
             border-radius: 10px;
@@ -48,56 +70,84 @@
             text-align: center;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             width: 150px;
+            transition: transform 0.2s;
         }
-        .day-card img {
-            width: 50px;
-            height: 50px;
-            margin-bottom: 10px;
+
+        .day-card:hover {
+            transform: scale(1.05);
         }
+
         .day-card h3 {
             margin: 0;
             font-size: 1.2rem;
             color: #333;
         }
+
         .day-card p {
             margin: 5px 0;
             font-size: 1rem;
             color: #555;
         }
+
+        .day-card .location-display {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #555;
+        }
     </style>
 </head>
+
 <body>
     <header>
         <h1>Wetter-App</h1>
     </header>
+
     <div class="container">
-        <div class="calendar">
-            <label for="start-date">Wähle ein Datum:</label>
-            <input type="date" id="start-date">
+        <div class="inputs">
+            <div>
+                <label for="location-input">Standort eingeben:</label><br>
+                <input type="text" id="location-input" placeholder="z. B. Berlin">
+            </div>
+            <div>
+                <label for="start-date">Datum wählen:</label><br>
+                <input type="date" id="start-date">
+            </div>
         </div>
+
         <div class="week-weather" id="weather-container">
-            <!-- Die Wetterkarten werden hier eingefügt -->
+            <!-- Wetterkarten -->
+        </div>
+
+        <div class="footer">
+            &copy; 2025 Wetter-App – Joschka Peeters
         </div>
     </div>
 
     <script>
         const weatherContainer = document.getElementById("weather-container");
         const startDateInput = document.getElementById("start-date");
+        const locationInput = document.getElementById("location-input");
 
-        // Funktion, um zufällige Temperaturen zu generieren
+        const days = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+
         function generateRandomTemperature() {
             return Math.floor(Math.random() * (28 - 20 + 1)) + 20;
         }
-         // Funktion, um zufälligen UV-Index (Mittel oder Hoch) zu erzeugen
+
         function generateRandomUVIndex() {
             const values = ["Mittel", "Hoch"];
             return values[Math.floor(Math.random() * values.length)];
         }
 
-        // Funktion, um das Wetter für eine Woche zu generieren
-        function generateWeeklyWeather(startDate) {
-            weatherContainer.innerHTML = ""; // Bereinige vorherigen Inhalt
-            const days = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+        function generateWeeklyWeather(startDate, location) {
+            weatherContainer.innerHTML = "";
+
             for (let i = 0; i < 7; i++) {
                 const currentDate = new Date(startDate);
                 currentDate.setDate(currentDate.getDate() + i);
@@ -105,34 +155,31 @@
                 const temperature = generateRandomTemperature();
                 const uvIndex = generateRandomUVIndex();
 
-                // Erstelle eine Wetterkarte
                 const dayCard = document.createElement("div");
                 dayCard.className = "day-card";
-
-                // Icon als Emoji für iOS-Kompatibilität (Alternativ: <img src="sonne.png"> bei lokalem Bild)
                 dayCard.innerHTML = `
                     <h3>${dayName}</h3>
                     <div style="font-size: 2rem;">☀️</div>
-                    <p>${temperature}°C</p>
+                    <p><strong>${temperature}°C</strong></p>
                     <p>${currentDate.toLocaleDateString("de-DE")}</p>
                     <p><strong>UV-Index:</strong> ${uvIndex}</p>
+                    <p class="location-display">📍 ${location}</p>
                 `;
                 weatherContainer.appendChild(dayCard);
             }
         }
 
-        // Event-Listener für Datumsauswahl
-        startDateInput.addEventListener("change", (event) => {
-            const parts = event.target.value.split("-");
-            if (parts.length === 3) {
-                const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
-                if (!isNaN(selectedDate)) {
-                    generateWeeklyWeather(selectedDate);
-                }
+        function updateWeather() {
+            const selectedDate = new Date(startDateInput.value);
+            const location = locationInput.value.trim() || "Unbekannt";
+            if (!isNaN(selectedDate)) {
+                generateWeeklyWeather(selectedDate, location);
             }
-        });
+        }
 
-        // Standardmäßig die aktuelle Woche anzeigen
+        startDateInput.addEventListener("change", updateWeather);
+        locationInput.addEventListener("input", updateWeather);
+
         window.addEventListener("DOMContentLoaded", () => {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -140,8 +187,10 @@
             const dd = String(today.getDate()).padStart(2, '0');
             const formatted = `${yyyy}-${mm}-${dd}`;
             startDateInput.value = formatted;
-            generateWeeklyWeather(today);
+            locationInput.value = "Berlin";
+            updateWeather();
         });
     </script>
 </body>
+
 </html>
