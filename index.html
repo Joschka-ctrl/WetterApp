@@ -56,6 +56,21 @@
             width: 250px;
         }
 
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            background-color: #FFD700;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #e6c200;
+        }
+
         .week-weather {
             display: flex;
             justify-content: center;
@@ -104,9 +119,11 @@
 </head>
 
 <body>
+    <!-- Header -->
     <header>
-        <h1>Wetter-App</h1>
+        <h1 id="header-title">Wetter 📍 Konstanz</h1>
     </header>
+
 
     <div class="container">
         <div class="inputs">
@@ -118,6 +135,7 @@
                 <label for="start-date">Datum wählen:</label><br>
                 <input type="date" id="start-date">
             </div>
+            <button id="apply-button">Übernehmen</button>
         </div>
 
         <div class="week-weather" id="weather-container">
@@ -133,6 +151,7 @@
         const weatherContainer = document.getElementById("weather-container");
         const startDateInput = document.getElementById("start-date");
         const locationInput = document.getElementById("location-input");
+        const applyButton = document.getElementById("apply-button");
 
         const days = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
 
@@ -169,17 +188,17 @@
             }
         }
 
+        // JavaScript: Aktualisiert den Header mit aktuellem Standort
         function updateWeather() {
             const selectedDate = new Date(startDateInput.value);
             const location = locationInput.value.trim() || "Unbekannt";
             if (!isNaN(selectedDate)) {
                 generateWeeklyWeather(selectedDate, location);
+                document.getElementById("header-title").textContent = `Wetter 📍 ${location}`;
             }
         }
 
-        startDateInput.addEventListener("change", updateWeather);
-        locationInput.addEventListener("input", updateWeather);
-
+        // Beim Laden: Standort = Konstanz
         window.addEventListener("DOMContentLoaded", () => {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -187,9 +206,14 @@
             const dd = String(today.getDate()).padStart(2, '0');
             const formatted = `${yyyy}-${mm}-${dd}`;
             startDateInput.value = formatted;
-            locationInput.value = "Berlin";
+            locationInput.value = "Konstanz";
             updateWeather();
         });
+
+
+        applyButton.addEventListener("click", updateWeather);
+
+    
     </script>
 </body>
 
