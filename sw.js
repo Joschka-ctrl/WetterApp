@@ -1,5 +1,5 @@
-const CACHE = "sonnenwetter-v5";
-const FILES = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png", "./icon-180.png"];
+const CACHE = "sonnenwetter-v6";
+const FILES = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png", "./icon-180.png", "./vendor/globe.gl.min.js", "./vendor/earth-day.jpg", "./vendor/earth-night.jpg", "./vendor/night-sky.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });

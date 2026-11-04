@@ -130,21 +130,24 @@
         .day-card .tagline { font-size: .78rem; color: var(--muted); margin: 6px 0 0; min-height: 2.2em; }
         .day-card .rain { font-size: .78rem; margin-top: 6px; color: #2a7a2a; }
 
-        .sat {
-            background: #06101f; border-radius: 16px; padding: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25);
-            position: relative; overflow: hidden; color: #cfe3ff;
+        .globe-wrap {
+            position: relative; border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 8px 24px rgba(0,0,0,.3);
+            width: 100%; height: min(calc(100vw - 32px), 520px);
         }
-        .sat .bar { display: flex; justify-content: space-between; align-items: center; font-size: .75rem; font-family: ui-monospace, Menlo, monospace; margin-bottom: 6px; }
-        .sat .live { color: #ff5252; font-weight: 700; }
-        .sat .live::before { content: "●"; margin-right: 4px; animation: blink 1.2s steps(2) infinite; }
+        #globe { width: 100%; height: 100%; }
+        .globe-wrap .overlay {
+            position: absolute; left: 12px; top: 10px; color: #fff; font-size: .75rem; font-family: ui-monospace, Menlo, monospace;
+            background: rgba(0,0,0,.45); padding: 5px 9px; border-radius: 8px; pointer-events: none;
+        }
+        .globe-wrap .overlay b { color: #ff5252; } .globe-wrap .overlay b::before { content: "●"; margin-right: 4px; animation: blink 1.2s steps(2) infinite; }
         @keyframes blink { to { opacity: .2 } }
-        .sat svg { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at 50% 40%, #0e2a52 0%, #06101f 75%); }
-        .sat .scan { position: absolute; left: 0; right: 0; height: 60px; top: -60px; background: linear-gradient(180deg, transparent, rgba(120,200,255,.12), transparent); animation: scan 5s linear infinite; pointer-events: none; }
-        @keyframes scan { to { top: 110% } }
-        .sat .legend { font-size: .72rem; color: #8fb0d8; margin-top: 8px; display: flex; gap: 14px; flex-wrap: wrap; }
-        .sun-marker { animation: pulse 2.4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
-        @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.18) } }
-        @media (max-width: 520px) { .sat .bar span:last-child { display: none; } }
+        .globe-wrap .hint { position: absolute; right: 12px; bottom: 10px; color: rgba(255,255,255,.7); font-size: .72rem; pointer-events: none; }
+        .sun-pin { font-size: 18px; line-height: 1; pointer-events: none; text-align: center; }
+        .sun-pin span { display: inline-block; filter: drop-shadow(0 0 6px rgba(255,215,0,.9)); animation: pulse 2.4s ease-in-out infinite; }
+        .sun-pin.me { font-size: 30px; }
+        .sun-pin.me span { filter: drop-shadow(0 0 12px #FFD700); }
+        .sun-pin.me::after { content: attr(data-name); display: block; font: 700 12px/1 -apple-system, sans-serif; color: #fff; text-shadow: 0 1px 3px #000; margin-top: 2px; white-space: nowrap; }
+        @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.2) } }
         .toast {
             position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(20px);
             background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: .9rem; opacity: 0;
@@ -197,12 +200,11 @@
         <div class="section-title">Stündlich</div>
         <div class="hourly" id="hourly"></div>
 
-        <div class="section-title">Satellitenbild Europa</div>
-        <div class="sat">
-            <div class="bar"><span class="live">LIVE</span><span id="sat-time"></span><span>SONNENSAT-1 · IR-Kanal</span></div>
-            <svg id="sat-map" viewBox="0 0 470 380" xmlns="http://www.w3.org/2000/svg"></svg>
-            <div class="scan"></div>
-            <div class="legend"><span>☀️ Sonne</span><span>🌧️ Regen: keine Daten (kommt nie vor)</span><span id="sat-note"></span></div>
+        <div class="section-title">Weltweit sonnig – Live-Globus</div>
+        <div class="globe-wrap">
+            <div id="globe"></div>
+            <div class="overlay"><b>LIVE</b> SONNENSAT-1 · <span id="globe-time"></span></div>
+            <div class="hint">Drehen mit dem Finger · Zoom mit zwei Fingern</div>
         </div>
 
         <div class="section-title">7-Tage-Vorhersage</div>
@@ -215,6 +217,7 @@
     </div>
     <div class="toast" id="toast"></div>
 
+    <script src="vendor/globe.gl.min.js"></script>
     <script>
         const $ = id => document.getElementById(id);
         const weatherContainer = $("weather-container"), todayCard = $("today-card"), hourlyEl = $("hourly");
@@ -389,49 +392,68 @@
         });
 
         // ---- Dark Mode ----
-        function applyDark() {
+        let applyDark = function () {
             document.body.classList.toggle("dark", state.dark);
             $("dark-btn").textContent = state.dark ? "☀️" : "🌙";
             document.querySelector('meta[name="theme-color"]').content = state.dark ? "#e0b400" : "#FFD700";
-        }
+        };
         state.dark = localStorage.getItem("sw-dark") !== null ? localStorage.getItem("sw-dark") === "1" : (t0 => t0 >= 21 || t0 < 6)(new Date().getHours());
         $("dark-btn").addEventListener("click", () => { state.dark = !state.dark; try { localStorage.setItem("sw-dark", state.dark ? "1" : "0"); } catch(e) {} applyDark(); });
         applyDark();
 
-        // ---- Satellitenbild ----
-        const SAT_CITIES = [["Lissabon",-9.1,38.7],["Madrid",-3.7,40.4],["Barcelona",2.2,41.4],["Mallorca",3,39.6],["Paris",2.35,48.9],
-            ["London",-0.1,51.5],["Dublin",-6.3,53.3],["Edinburgh",-3.2,56],["Amsterdam",4.9,52.4],["Hamburg",10,53.6],["Berlin",13.4,52.5],
-            ["Konstanz",9.2,47.7],["Zürich",8.5,47.4],["München",11.6,48.1],["Wien",16.4,48.2],["Prag",14.4,50.1],["Warschau",21,52.2],
-            ["Budapest",19,47.5],["Rom",12.5,41.9],["Athen",23.7,38],["Istanbul",29,41],["Kopenhagen",12.6,55.7],["Oslo",10.7,59.9],
-            ["Stockholm",18.1,59.3],["Helsinki",25,60.2],["Kiew",30.5,50.4]];
-        const LAND = [
-            "-9,37 -9,43 -2,43.5 -1.5,46 -4.5,48.5 2,51 4.5,53 8,54 8,57 10.5,57.5 12,55.5 14,54 20,54.5 21,57 24,59 30,60 35,50 29,44 23,40 22,37 24,35 18,40 16,38 12.5,42 8,44 3,43 0,38 -6,36",
-            "5,58 5,62 14,67 25,71 30,70 30,62 25,65 21,65 18,59 12.5,56 8,58",
-            "-5,50 1.5,51 0,53 -2,56 -6,58 -5,54", "-10,52 -6,52 -6,55 -10,54",
-            "8,39 9.5,39 9.5,41 8,41", "33,35 34,35 34,36 33,36"
-        ];
-        const proj = (lon, lat) => [((lon + 12) / 47) * 470, ((72 - lat) / 38) * 380];
-        function renderSat() {
-            const now = new Date(), loc = state.location.toLowerCase();
-            let g = "";
-            for (let lon = -10; lon <= 35; lon += 5) { const [x] = proj(lon, 50); g += `<line x1="${x}" y1="0" x2="${x}" y2="380" stroke="#1d3a66" stroke-width=".5"/>`; }
-            for (let lat = 35; lat <= 70; lat += 5) { const [,y] = proj(0, lat); g += `<line x1="0" y1="${y}" x2="470" y2="${y}" stroke="#1d3a66" stroke-width=".5"/>`; }
-            const land = LAND.map(p => `<polygon points="${p.split(" ").map(c => proj(...c.split(",").map(Number)).join(",")).join(" ")}" fill="#1f4a3a" stroke="#3a7a5a" stroke-width="1" stroke-linejoin="round"/>`).join("");
-            const marks = SAT_CITIES.map(([n, lon, lat], i) => {
-                const [x, y] = proj(lon, lat), me = n.toLowerCase() === loc;
-                return `<g class="sun-marker" style="animation-delay:${(i % 7) * .3}s">
-                    ${me ? `<circle cx="${x}" cy="${y}" r="14" fill="none" stroke="#FFD700" stroke-width="2"><animate attributeName="r" values="12;22;12" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0;1" dur="2s" repeatCount="indefinite"/></circle>` : ""}
-                    <circle cx="${x}" cy="${y}" r="${me ? 8 : 5}" fill="#FFD700" opacity=".95"/>
-                    <circle cx="${x}" cy="${y}" r="${me ? 12 : 8}" fill="#FFD700" opacity=".18"/>
-                    ${me ? `<text x="${x}" y="${y - 18}" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">${n}</text>` : ""}
-                </g>`;
-            }).join("");
-            const known = SAT_CITIES.some(c => c[0].toLowerCase() === loc);
-            $("sat-map").innerHTML = g + land + marks;
-            $("sat-time").textContent = now.toLocaleDateString("de-DE") + " " + now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) + " UTC+1";
-            $("sat-note").textContent = known ? `📍 ${state.location} im Bild` : `📍 ${state.location}: außerhalb des Ausschnitts, trotzdem sonnig`;
+        // ---- Globus ----
+        const WORLD_SUNS = [["Konstanz",47.7,9.2],["Berlin",52.5,13.4],["Hamburg",53.6,10],["München",48.1,11.6],["Köln",50.9,6.9],
+            ["Wien",48.2,16.4],["Zürich",47.4,8.5],["Paris",48.9,2.35],["London",51.5,-0.1],["Madrid",40.4,-3.7],["Lissabon",38.7,-9.1],
+            ["Rom",41.9,12.5],["Athen",38,23.7],["Istanbul",41,29],["Stockholm",59.3,18.1],["Oslo",59.9,10.7],["Moskau",55.8,37.6],
+            ["Reykjavik",64.1,-21.9],["Kairo",30,31.2],["Lagos",6.5,3.4],["Nairobi",-1.3,36.8],["Kapstadt",-33.9,18.4],["Dubai",25.2,55.3],
+            ["Mumbai",19.1,72.9],["Delhi",28.6,77.2],["Bangkok",13.8,100.5],["Singapur",1.3,103.8],["Jakarta",-6.2,106.8],["Bali",-8.4,115.2],
+            ["Hongkong",22.3,114.2],["Shanghai",31.2,121.5],["Peking",39.9,116.4],["Seoul",37.6,127],["Tokio",35.7,139.7],["Sydney",-33.9,151.2],
+            ["Melbourne",-37.8,145],["Auckland",-36.8,174.8],["Honolulu",21.3,-157.9],["Anchorage",61.2,-149.9],["Vancouver",49.3,-123.1],
+            ["Los Angeles",34.1,-118.2],["Mexiko-Stadt",19.4,-99.1],["Chicago",41.9,-87.6],["New York",40.7,-74],["Miami",25.8,-80.2],
+            ["Havanna",23.1,-82.4],["Bogotá",4.7,-74.1],["Lima",-12,-77],["São Paulo",-23.5,-46.6],["Rio",-22.9,-43.2],["Buenos Aires",-34.6,-58.4],
+            ["Santiago",-33.4,-70.6],["Südpol",-89,0],["Nordpol",89,0]];
+        let globe = null, myPin = null;
+        function initGlobe() {
+            if (typeof Globe === "undefined") { $("globe").innerHTML = '<p style="color:#fff;padding:20px">Globus konnte nicht geladen werden – sonnig ist es trotzdem.</p>'; return; }
+            const el = $("globe");
+            globe = Globe()(el)
+                .globeImageUrl(state.dark ? "vendor/earth-night.jpg" : "vendor/earth-day.jpg")
+                .backgroundImageUrl("vendor/night-sky.png")
+                .showAtmosphere(true).atmosphereColor("#ffd700").atmosphereAltitude(.18)
+                .htmlElementsData(WORLD_SUNS.map(([name, lat, lng]) => ({ name, lat, lng })))
+                .htmlLat("lat").htmlLng("lng").htmlAltitude(.01)
+                .htmlElement(d => { const e = document.createElement("div"); e.className = "sun-pin" + (d.me ? " me" : ""); e.innerHTML = "<span>☀️</span>"; e.dataset.name = d.name; e.title = d.name + ": sonnig"; return e; });
+            globe.controls().autoRotate = true; globe.controls().autoRotateSpeed = .6;
+            globe.controls().enableZoom = true;
+            globe.pointOfView({ lat: 45, lng: 10, altitude: 2.2 });
+            const fit = () => { const w = el.clientWidth || 300, h = el.clientHeight || w; globe.width(w).height(h); };
+            fit(); requestAnimationFrame(fit); new ResizeObserver(fit).observe(el);
+            setInterval(() => $("globe-time").textContent = new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }), 1000);
+            updateGlobeLocation();
         }
-        const _render = render; render = function () { _render(); renderSat(); };
+        async function geocode(name) {
+            const hit = WORLD_SUNS.find(c => c[0].toLowerCase() === name.toLowerCase());
+            if (hit) return { lat: hit[1], lng: hit[2] };
+            try {
+                const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=de&q=${encodeURIComponent(name)}`);
+                const j = await r.json(); if (j[0]) return { lat: +j[0].lat, lng: +j[0].lon };
+            } catch {}
+            return null;
+        }
+        let geoSeq = 0;
+        async function updateGlobeLocation() {
+            if (!globe) return;
+            const seq = ++geoSeq, name = state.location, pos = await geocode(name);
+            if (seq !== geoSeq) return;
+            const data = WORLD_SUNS.filter(c => c[0].toLowerCase() !== name.toLowerCase()).map(([n, lat, lng]) => ({ name: n, lat, lng }));
+            if (pos) { data.push({ name, lat: pos.lat, lng: pos.lng, me: true }); globe.pointOfView({ lat: pos.lat, lng: pos.lng, altitude: 1.8 }, 1200); }
+            globe.htmlElementsData(data);
+        }
+        const _render = render, _applyDark = applyDark;
+        render = function () { _render(); updateGlobeLocation(); };
+        applyDark = function () { _applyDark(); if (globe) globe.globeImageUrl(state.dark ? "vendor/earth-night.jpg" : "vendor/earth-day.jpg"); };
+        $("dark-btn").addEventListener("click", () => applyDark());
+        initGlobe();
 
         // ---- Start ----
         const t = new Date();
