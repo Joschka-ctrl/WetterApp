@@ -13,113 +13,142 @@
     <title>Sonnenwetter – Immer gutes Wetter</title>
     <style>
         :root {
-            --sky: #7ec8f0;
-            --sand: #fff3b0;
-            --sun: #FFD700;
-            --sun-dark: #e6b800;
-            --ink: #2d2a26;
-            --muted: #6b655c;
+            --sky: #7ec8f0; --sand: #fff3b0; --sun: #FFD700; --sun-dark: #e6b800;
+            --ink: #2d2a26; --muted: #6b655c; --card: rgba(255,255,255,.88);
         }
         * { box-sizing: border-box; }
-        html, body { height: 100%; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background: linear-gradient(180deg, var(--sky) 0%, var(--sand) 100%);
-            background-attachment: fixed;
-            margin: 0;
-            color: var(--ink);
-            min-height: 100vh;
+            background-attachment: fixed; margin: 0; color: var(--ink); min-height: 100vh;
         }
         header {
-            background: var(--sun);
-            padding: calc(16px + env(safe-area-inset-top)) 20px 16px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,.15);
-            position: sticky; top: 0; z-index: 2;
+            background: var(--sun); padding: calc(14px + env(safe-area-inset-top)) 16px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.15); position: sticky; top: 0; z-index: 5;
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
         }
-        header h1 { margin: 0; font-size: 1.7rem; }
-        header p { margin: 4px 0 0; font-size: .9rem; color: #5a4a00; }
+        header h1 { margin: 0; font-size: 1.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        header .sub { margin: 2px 0 0; font-size: .75rem; color: #5a4a00; }
+        .hdr-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .icon-btn {
+            width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,.55);
+            font-size: 1.1rem; cursor: pointer; display: grid; place-items: center; transition: background .15s;
+        }
+        .icon-btn:hover { background: #fff; }
+        .icon-btn.active { background: #fff; box-shadow: inset 0 0 0 2px var(--sun-dark); }
 
-        .container { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 16px 16px 40px; }
 
-        .inputs {
-            display: flex; flex-wrap: wrap; gap: 12px;
-            justify-content: center; align-items: flex-end; margin-bottom: 24px;
+        .search {
+            display: flex; gap: 8px; margin-bottom: 10px; background: var(--card); border-radius: 14px;
+            padding: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.1); align-items: center;
         }
-        .inputs label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 4px; }
-        input[type="date"], input[type="text"] {
-            padding: 12px 14px; font-size: 1rem; border: 1px solid rgba(0,0,0,.15);
-            border-radius: 10px; width: 220px; max-width: 100%; background: #fff;
+        .search input[type="text"] {
+            flex: 1; min-width: 0; padding: 11px 12px; font-size: 1rem; border: none; background: transparent; outline: none;
         }
-        button {
-            padding: 12px 22px; font-size: 1rem; font-weight: 600; border: none;
-            background: var(--sun); color: var(--ink); border-radius: 10px; cursor: pointer;
-            box-shadow: 0 3px 8px rgba(0,0,0,.15); transition: transform .1s, background .2s;
+        .search input[type="date"] {
+            padding: 9px 10px; font-size: .95rem; border: 1px solid rgba(0,0,0,.12); border-radius: 10px; background: #fff; max-width: 150px;
         }
-        button:hover { background: var(--sun-dark); }
-        button:active { transform: scale(.97); }
+        .btn {
+            padding: 10px 16px; font-size: .95rem; font-weight: 600; border: none; background: var(--sun); color: var(--ink);
+            border-radius: 10px; cursor: pointer; transition: background .2s, transform .1s; white-space: nowrap;
+        }
+        .btn:hover { background: var(--sun-dark); } .btn:active { transform: scale(.97); }
+
+        .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+        .chip {
+            padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,.6); border: 1px solid rgba(0,0,0,.08);
+            font-size: .85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .chip.current { background: var(--sun); font-weight: 600; }
+        .chip .x { opacity: .5; font-size: .8rem; }
+        .chip .x:hover { opacity: 1; }
 
         .today {
-            background: rgba(255,255,255,.85);
-            backdrop-filter: blur(6px);
-            border-radius: 20px; padding: 24px; margin-bottom: 24px;
-            box-shadow: 0 8px 24px rgba(0,0,0,.12);
-            display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center;
+            background: var(--card); backdrop-filter: blur(6px); border-radius: 20px; padding: 22px; margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.12); display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center;
         }
         .today .icon { font-size: 4.5rem; line-height: 1; animation: float 4s ease-in-out infinite; }
         @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
-        .today .temp { font-size: 3rem; font-weight: 700; margin: 0; }
+        .today .temp { font-size: 3rem; font-weight: 700; margin: 0; line-height: 1.1; }
         .today .desc { margin: 4px 0 0; color: var(--muted); }
-        .today .tagline { margin: 10px 0 0; font-weight: 600; }
-        .stats {
-            grid-column: 1 / -1;
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;
-        }
+        .today .tagline { margin: 8px 0 0; font-weight: 600; }
+        .today .star { font-size: 1.6rem; background: none; border: none; cursor: pointer; align-self: start; }
+        .stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
         .stat { background: rgba(255,215,0,.18); border-radius: 12px; padding: 10px; text-align: center; }
-        .stat .v { font-weight: 700; font-size: 1.05rem; }
-        .stat .l { font-size: .75rem; color: var(--muted); }
+        .stat .v { font-weight: 700; font-size: 1.05rem; } .stat .l { font-size: .75rem; color: var(--muted); }
 
-        .week { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+        .section-title { font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 8px; }
+        .hourly {
+            display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        }
+        .hour {
+            flex: 0 0 68px; background: var(--card); border-radius: 12px; padding: 10px 6px; text-align: center; scroll-snap-align: start;
+            box-shadow: 0 3px 8px rgba(0,0,0,.08); font-size: .8rem;
+        }
+        .hour .t { font-weight: 700; font-size: 1rem; } .hour .i { font-size: 1.4rem; margin: 4px 0; }
+        .hour.now { outline: 2px solid var(--sun); }
+
+        .week { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
         .day-card {
-            background: #fff; border-radius: 14px; padding: 16px 12px; text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,.12); transition: transform .15s;
+            background: #fff; border-radius: 14px; padding: 14px 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,.12);
+            transition: transform .15s; cursor: pointer;
         }
         .day-card:hover { transform: translateY(-4px); }
-        .day-card.is-today { outline: 3px solid var(--sun); }
-        .day-card h3 { margin: 0; font-size: 1.05rem; }
-        .day-card .date { font-size: .8rem; color: var(--muted); }
-        .day-card .icon { font-size: 2.4rem; margin: 8px 0; }
-        .day-card .temp { font-size: 1.4rem; font-weight: 700; margin: 0; }
-        .day-card .tagline { font-size: .8rem; color: var(--muted); margin: 6px 0 0; min-height: 2.2em; }
-        .day-card .rain { font-size: .8rem; margin-top: 6px; color: #2a7a2a; }
+        .day-card.is-selected { outline: 3px solid var(--sun); }
+        .day-card h3 { margin: 0; font-size: 1rem; }
+        .day-card .date { font-size: .78rem; color: var(--muted); }
+        .day-card .icon { font-size: 2.3rem; margin: 6px 0; }
+        .day-card .temp { font-size: 1.35rem; font-weight: 700; margin: 0; }
+        .day-card .tagline { font-size: .78rem; color: var(--muted); margin: 6px 0 0; min-height: 2.2em; }
+        .day-card .rain { font-size: .78rem; margin-top: 6px; color: #2a7a2a; }
 
-        .footer { text-align: center; margin-top: 36px; font-size: .85rem; color: var(--muted); }
+        .toast {
+            position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: .9rem; opacity: 0;
+            transition: all .25s; pointer-events: none; z-index: 10; max-width: 90vw; text-align: center;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .footer { text-align: center; margin-top: 36px; font-size: .8rem; color: var(--muted); }
         .footer small { display: block; margin-top: 4px; opacity: .7; }
-        @media (max-width: 480px) {
-            .today { grid-template-columns: 1fr; text-align: center; }
+        @media (max-width: 520px) {
+            .today { grid-template-columns: 1fr auto; }
+            .today .icon { grid-column: 1 / -1; text-align: center; }
+            .search { flex-wrap: wrap; }
+            .search input[type="text"] { flex-basis: 100%; }
+            .search input[type="date"] { flex: 1; max-width: none; }
         }
     </style>
 </head>
 <body>
     <header>
-        <h1 id="header-title">☀️ Wetter 📍 Konstanz</h1>
-        <p>Die einzige Wetter-App mit 100 % Sonnengarantie</p>
+        <div>
+            <h1 id="header-title">☀️ Konstanz</h1>
+            <p class="sub">100 % Sonnengarantie · <span id="updated"></span></p>
+        </div>
+        <div class="hdr-actions">
+            <button class="icon-btn" id="unit-btn" title="Einheit wechseln">°C</button>
+            <button class="icon-btn" id="share-btn" title="Teilen">📤</button>
+        </div>
     </header>
 
     <div class="container">
-        <div class="inputs">
-            <div>
-                <label for="location-input">Standort</label>
-                <input type="text" id="location-input" placeholder="z. B. Berlin" autocomplete="off">
-            </div>
-            <div>
-                <label for="start-date">Ab Datum</label>
-                <input type="date" id="start-date">
-            </div>
-            <button id="apply-button">Übernehmen</button>
+        <div class="search">
+            <input type="text" id="location-input" list="cities" placeholder="Stadt suchen …" autocomplete="off">
+            <datalist id="cities"></datalist>
+            <button class="icon-btn" id="geo-btn" title="Mein Standort">📍</button>
+            <input type="date" id="start-date">
+            <button class="btn" id="apply-button">Los</button>
         </div>
+        <div class="chips" id="favorites"></div>
 
         <div class="today" id="today-card"></div>
+
+        <div class="section-title">Stündlich</div>
+        <div class="hourly" id="hourly"></div>
+
+        <div class="section-title">7-Tage-Vorhersage</div>
         <div class="week" id="weather-container"></div>
 
         <div class="footer">
@@ -127,89 +156,113 @@
             <small>Vorhersage-Genauigkeit: 100 % (für gutes Wetter)</small>
         </div>
     </div>
+    <div class="toast" id="toast"></div>
 
     <script>
-        const weatherContainer = document.getElementById("weather-container");
-        const todayCard = document.getElementById("today-card");
-        const startDateInput = document.getElementById("start-date");
-        const locationInput = document.getElementById("location-input");
-        const applyButton = document.getElementById("apply-button");
-        const headerTitle = document.getElementById("header-title");
+        const $ = id => document.getElementById(id);
+        const weatherContainer = $("weather-container"), todayCard = $("today-card"), hourlyEl = $("hourly");
+        const startDateInput = $("start-date"), locationInput = $("location-input"), favoritesEl = $("favorites");
 
-        const days = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
-        const icons = ["☀️", "☀️", "☀️", "🌤️", "😎", "🌞"];
-        const descs = {
-            "☀️": "Strahlender Sonnenschein", "🌤️": "Sonnig, ein Deko-Wölkchen",
-            "😎": "Sonnenbrillen-Wetter", "🌞": "Sonne, Sonne, Sonne"
+        const CITIES = ["Konstanz","Berlin","Hamburg","München","Köln","Frankfurt am Main","Stuttgart","Düsseldorf","Leipzig","Dortmund",
+            "Essen","Bremen","Dresden","Hannover","Nürnberg","Duisburg","Bochum","Wuppertal","Bielefeld","Bonn","Münster","Karlsruhe",
+            "Mannheim","Augsburg","Wiesbaden","Mönchengladbach","Gelsenkirchen","Braunschweig","Kiel","Aachen","Freiburg im Breisgau",
+            "Heidelberg","Ulm","Regensburg","Würzburg","Rostock","Lübeck","Mainz","Erfurt","Potsdam","Saarbrücken","Friedrichshafen",
+            "Singen","Radolfzell","Überlingen","Lindau","Ravensburg","Zürich","Wien","Salzburg","Innsbruck","Basel","Bern","Mallorca",
+            "Ibiza","Rom","Barcelona","Lissabon","Paris","Amsterdam","London","New York","Dubai","Bali","Tokio"];
+        $("cities").innerHTML = CITIES.map(c => `<option value="${c}">`).join("");
+
+        const days = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
+        const daysShort = ["So","Mo","Di","Mi","Do","Fr","Sa"];
+        const icons = ["☀️","☀️","☀️","🌤️","😎","🌞"];
+        const descs = { "☀️":"Strahlender Sonnenschein", "🌤️":"Sonnig, ein Deko-Wölkchen", "😎":"Sonnenbrillen-Wetter", "🌞":"Sonne, Sonne, Sonne" };
+        const taglines = ["Perfektes Grillwetter","Eis geht immer","Ab an den See!","Sonnencreme nicht vergessen","Fahrradwetter",
+            "Biergarten ist offen","Kein Regenschirm nötig","Wie im Urlaub","Flip-Flop-Tag","Sonne satt","Picknick-Alarm","Badehose raus"];
+        const winds = ["Windstill","Laues Lüftchen","Leichte Brise","Angenehm frisch"];
+
+        // ---- State ----
+        let state = {
+            location: localStorage.getItem("sw-ort") || "Konstanz",
+            unit: localStorage.getItem("sw-unit") || "C",
+            favorites: JSON.parse(localStorage.getItem("sw-favs") || '["Konstanz","Berlin","Mallorca"]'),
+            selected: new Date(), start: new Date(),
         };
-        const taglines = [
-            "Perfektes Grillwetter", "Eis geht immer", "Ab an den See!",
-            "Sonnencreme nicht vergessen", "Fahrradwetter", "Biergarten ist offen",
-            "Kein Regenschirm nötig", "Wie im Urlaub", "Flip-Flop-Tag", "Sonne satt"
-        ];
-        const winds = ["Windstill", "Laues Lüftchen", "Leichte Brise", "Angenehm frisch"];
+        const save = () => { try {
+            localStorage.setItem("sw-ort", state.location); localStorage.setItem("sw-unit", state.unit);
+            localStorage.setItem("sw-favs", JSON.stringify(state.favorites));
+        } catch(e) {} };
 
-        // Deterministischer Zufall: gleicher Tag + Ort = gleiches (gutes) Wetter
+        // ---- Deterministischer Zufall: gleicher Tag + Ort = gleiches (gutes) Wetter ----
         function seededRandom(seed) {
             let h = 2166136261;
             for (let i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); }
             return () => { h += 0x6D2B79F5; let t = Math.imul(h ^ (h >>> 15), 1 | h);
                 t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
         }
-        const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
+        const pick = (r, a) => a[Math.floor(r() * a.length)];
         const between = (r, a, b) => Math.floor(r() * (b - a + 1)) + a;
+        const dayKey = d => `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
 
         function forecastFor(date, location) {
-            const key = date.toISOString().slice(0, 10) + "|" + location.toLowerCase();
-            const r = seededRandom(key);
-            const icon = pick(r, icons);
-            const temp = between(r, 22, 29);
-            const h = between(r, 5, 6), m = between(r, 0, 59);
-            return {
-                icon, temp, desc: descs[icon],
-                low: temp - between(r, 6, 9),
-                tagline: pick(r, taglines),
-                uv: pick(r, ["Mittel", "Hoch"]),
-                wind: pick(r, winds),
-                humidity: between(r, 35, 55),
-                sunrise: `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`,
-                sunset: `${between(r, 20, 21)}:${String(between(r, 10, 59)).padStart(2,"0")}`,
-                sunHours: between(r, 11, 14),
-            };
+            const r = seededRandom(dayKey(date) + "|" + location.toLowerCase());
+            const icon = pick(r, icons), temp = between(r, 22, 29);
+            return { icon, temp, desc: descs[icon], low: temp - between(r, 6, 9), tagline: pick(r, taglines),
+                uv: pick(r, ["Mittel","Hoch"]), wind: pick(r, winds), humidity: between(r, 35, 55),
+                sunrise: `0${between(r,5,6)}:${String(between(r,0,59)).padStart(2,"0")}`,
+                sunset: `${between(r,20,21)}:${String(between(r,10,59)).padStart(2,"0")}`, sunHours: between(r, 11, 14) };
+        }
+        function hourlyFor(date, location) {
+            const f = forecastFor(date, location), r = seededRandom("h|" + dayKey(date) + location);
+            return Array.from({ length: 24 }, (_, h) => {
+                // Temperaturkurve: Minimum ~5 Uhr, Maximum ~15 Uhr
+                const k = (1 - Math.cos((h - 5) / 24 * 2 * Math.PI)) / 2;
+                const t = Math.round(f.low + (f.temp - f.low) * k + (r() - .5));
+                const night = h < 6 || h > 20;
+                return { h, t, icon: night ? "🌙" : (h < 8 || h > 18 ? "🌅" : f.icon) };
+            });
         }
 
-        function isSameDay(a, b) { return a.toDateString() === b.toDateString(); }
+        const fmt = t => state.unit === "C" ? `${t}°` : `${Math.round(t * 9 / 5 + 32)}°`;
+        const unitLabel = () => state.unit === "C" ? "°C" : "°F";
+        const sameDay = (a, b) => a.toDateString() === b.toDateString();
 
-        function render(startDate, location) {
-            const today = new Date();
+        function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 2200); }
+
+        // ---- Render ----
+        function renderFavorites() {
+            favoritesEl.innerHTML = state.favorites.map(c => `
+                <span class="chip ${c === state.location ? "current" : ""}" data-city="${c}">📍 ${c} <span class="x" data-remove="${c}" title="Entfernen">✕</span></span>`).join("");
+        }
+        function render() {
+            const loc = state.location, today = new Date();
             weatherContainer.innerHTML = "";
             for (let i = 0; i < 7; i++) {
-                const d = new Date(startDate); d.setDate(d.getDate() + i);
-                const f = forecastFor(d, location);
-                const card = document.createElement("div");
-                card.className = "day-card" + (isSameDay(d, today) ? " is-today" : "");
+                const d = new Date(state.start); d.setDate(d.getDate() + i);
+                const f = forecastFor(d, loc), card = document.createElement("div");
+                card.className = "day-card" + (sameDay(d, state.selected) ? " is-selected" : "");
                 card.innerHTML = `
-                    <h3>${isSameDay(d, today) ? "Heute" : days[d.getDay()]}</h3>
-                    <div class="date">${d.toLocaleDateString("de-DE")}</div>
+                    <h3>${sameDay(d, today) ? "Heute" : (i === 0 || sameDay(d, new Date(today.getTime()+864e5)) && sameDay(state.start, today) ? "Morgen" : daysShort[d.getDay()])}</h3>
+                    <div class="date">${d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}</div>
                     <div class="icon">${f.icon}</div>
-                    <p class="temp">${f.temp}°</p>
-                    <div class="date">Nachts ${f.low}°</div>
+                    <p class="temp">${fmt(f.temp)}</p>
+                    <div class="date">Nachts ${fmt(f.low)}</div>
                     <p class="tagline">${f.tagline}</p>
-                    <div class="rain">💧 Regen: 0 %</div>
-                `;
+                    <div class="rain">💧 0 % Regen</div>`;
+                card.addEventListener("click", () => { state.selected = d; render(); });
                 weatherContainer.appendChild(card);
             }
 
-            const f = forecastFor(startDate, location);
-            const label = isSameDay(startDate, today) ? "Heute" : days[startDate.getDay()] + ", " + startDate.toLocaleDateString("de-DE");
+            const f = forecastFor(state.selected, loc);
+            const label = sameDay(state.selected, today) ? "Heute" : days[state.selected.getDay()] + ", " + state.selected.toLocaleDateString("de-DE");
+            const isFav = state.favorites.includes(loc);
             todayCard.innerHTML = `
                 <div class="icon">${f.icon}</div>
                 <div>
-                    <div class="desc">${label} in ${location}</div>
-                    <p class="temp">${f.temp}°C</p>
+                    <div class="desc">${label} · ${loc}</div>
+                    <p class="temp">${fmt(f.temp)}<span style="font-size:1.4rem;font-weight:500">${unitLabel()}</span></p>
                     <p class="desc">${f.desc} · gefühlt wie Urlaub</p>
                     <p class="tagline">${f.tagline} 🙌</p>
                 </div>
+                <button class="star" id="fav-btn" title="${isFav ? "Aus Favoriten entfernen" : "Zu Favoriten"}">${isFav ? "⭐" : "☆"}</button>
                 <div class="stats">
                     <div class="stat"><div class="v">0 %</div><div class="l">Regen</div></div>
                     <div class="stat"><div class="v">${f.uv}</div><div class="l">UV-Index</div></div>
@@ -217,32 +270,81 @@
                     <div class="stat"><div class="v">${f.humidity} %</div><div class="l">Luftfeuchte</div></div>
                     <div class="stat"><div class="v">${f.sunHours} h</div><div class="l">Sonnenstunden</div></div>
                     <div class="stat"><div class="v">${f.sunrise} – ${f.sunset}</div><div class="l">Sonne auf/unter</div></div>
-                </div>
-            `;
-            headerTitle.textContent = `☀️ Wetter 📍 ${location}`;
-            document.title = `Sonnenwetter – ${location}`;
+                </div>`;
+            $("fav-btn").onclick = toggleFav;
+
+            const nowH = today.getHours(), isToday = sameDay(state.selected, today);
+            hourlyEl.innerHTML = hourlyFor(state.selected, loc).map(x => `
+                <div class="hour ${isToday && x.h === nowH ? "now" : ""}">
+                    <div>${isToday && x.h === nowH ? "Jetzt" : String(x.h).padStart(2,"0") + ":00"}</div>
+                    <div class="i">${x.icon}</div><div class="t">${fmt(x.t)}</div><div style="color:#2a7a2a">0 %</div>
+                </div>`).join("");
+            if (isToday) { const n = hourlyEl.querySelector(".now"); n && n.scrollIntoView({ inline: "start", block: "nearest" }); }
+
+            $("header-title").textContent = `${f.icon} ${loc}`;
+            $("updated").textContent = "aktualisiert " + today.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+            $("unit-btn").textContent = unitLabel();
+            document.title = `Sonnenwetter – ${loc}`;
+            locationInput.value = loc;
+            renderFavorites();
         }
 
-        function updateWeather() {
-            const selectedDate = new Date(startDateInput.value + "T12:00:00");
-            const location = locationInput.value.trim() || "Konstanz";
-            if (!isNaN(selectedDate)) {
-                localStorage.setItem("sonnenwetter-ort", location);
-                render(selectedDate, location);
-            }
+        // ---- Aktionen ----
+        function setLocation(loc) {
+            loc = (loc || "").trim(); if (!loc) return;
+            state.location = loc.charAt(0).toUpperCase() + loc.slice(1); save(); render();
         }
-
-        window.addEventListener("DOMContentLoaded", () => {
-            const t = new Date();
-            startDateInput.value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
-            locationInput.value = localStorage.getItem("sonnenwetter-ort") || "Konstanz";
-            updateWeather();
+        function applyInputs() {
+            const d = new Date(startDateInput.value + "T12:00:00");
+            if (!isNaN(d)) { state.start = d; state.selected = d; }
+            setLocation(locationInput.value || state.location);
+        }
+        function toggleFav() {
+            const i = state.favorites.indexOf(state.location);
+            if (i >= 0) { state.favorites.splice(i, 1); toast("Aus Favoriten entfernt"); }
+            else { state.favorites.unshift(state.location); toast("⭐ Zu Favoriten hinzugefügt"); }
+            save(); render();
+        }
+        favoritesEl.addEventListener("click", e => {
+            const rm = e.target.dataset.remove, city = e.target.closest("[data-city]")?.dataset.city;
+            if (rm) { state.favorites = state.favorites.filter(c => c !== rm); save(); render(); }
+            else if (city) setLocation(city);
         });
-        applyButton.addEventListener("click", updateWeather);
-        [locationInput, startDateInput].forEach(el =>
-            el.addEventListener("keydown", e => { if (e.key === "Enter") updateWeather(); }));
+        $("apply-button").addEventListener("click", applyInputs);
+        [locationInput, startDateInput].forEach(el => el.addEventListener("keydown", e => { if (e.key === "Enter") applyInputs(); }));
+        locationInput.addEventListener("change", () => { if (CITIES.includes(locationInput.value)) applyInputs(); });
+        locationInput.addEventListener("focus", () => locationInput.select());
 
-        // Offline-fähig als PWA (nur über http/https, nicht in Electron/file://)
+        $("unit-btn").addEventListener("click", () => { state.unit = state.unit === "C" ? "F" : "C"; save(); render(); });
+
+        $("geo-btn").addEventListener("click", () => {
+            if (!navigator.geolocation) return toast("Kein GPS verfügbar – aber sonnig ist es trotzdem");
+            toast("Standort wird ermittelt …");
+            navigator.geolocation.getCurrentPosition(async pos => {
+                const { latitude: lat, longitude: lon } = pos.coords;
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=de`);
+                    const j = await res.json(), a = j.address || {};
+                    setLocation(a.city || a.town || a.village || a.municipality || a.county || "Mein Standort");
+                } catch { setLocation("Mein Standort"); }
+                toast("☀️ Gute Nachricht: Bei dir ist es sonnig");
+            }, () => toast("Standort nicht freigegeben – sonnig ist es trotzdem"), { timeout: 8000 });
+        });
+
+        $("share-btn").addEventListener("click", async () => {
+            const f = forecastFor(state.selected, state.location);
+            const text = `${f.icon} ${state.location}: ${fmt(f.temp)}${unitLabel()}, ${f.desc}, 0 % Regen. ${f.tagline}! – via Sonnenwetter`;
+            try {
+                if (navigator.share) await navigator.share({ title: "Sonnenwetter", text, url: location.href });
+                else { await navigator.clipboard.writeText(text + " " + location.href); toast("In Zwischenablage kopiert"); }
+            } catch {}
+        });
+
+        // ---- Start ----
+        const t = new Date();
+        startDateInput.value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
+        render();
+
         if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
             navigator.serviceWorker.register("sw.js").catch(() => {});
         }
