@@ -135,8 +135,7 @@
 
     <div class="container">
         <div class="search">
-            <input type="text" id="location-input" list="cities" placeholder="Stadt suchen …" autocomplete="off">
-            <datalist id="cities"></datalist>
+            <input type="text" id="location-input" placeholder="Ort eingeben – egal wo auf der Welt" autocomplete="off">
             <button class="icon-btn" id="geo-btn" title="Mein Standort">📍</button>
             <input type="date" id="start-date">
             <button class="btn" id="apply-button">Los</button>
@@ -163,13 +162,6 @@
         const weatherContainer = $("weather-container"), todayCard = $("today-card"), hourlyEl = $("hourly");
         const startDateInput = $("start-date"), locationInput = $("location-input"), favoritesEl = $("favorites");
 
-        const CITIES = ["Konstanz","Berlin","Hamburg","München","Köln","Frankfurt am Main","Stuttgart","Düsseldorf","Leipzig","Dortmund",
-            "Essen","Bremen","Dresden","Hannover","Nürnberg","Duisburg","Bochum","Wuppertal","Bielefeld","Bonn","Münster","Karlsruhe",
-            "Mannheim","Augsburg","Wiesbaden","Mönchengladbach","Gelsenkirchen","Braunschweig","Kiel","Aachen","Freiburg im Breisgau",
-            "Heidelberg","Ulm","Regensburg","Würzburg","Rostock","Lübeck","Mainz","Erfurt","Potsdam","Saarbrücken","Friedrichshafen",
-            "Singen","Radolfzell","Überlingen","Lindau","Ravensburg","Zürich","Wien","Salzburg","Innsbruck","Basel","Bern","Mallorca",
-            "Ibiza","Rom","Barcelona","Lissabon","Paris","Amsterdam","London","New York","Dubai","Bali","Tokio"];
-        $("cities").innerHTML = CITIES.map(c => `<option value="${c}">`).join("");
 
         const days = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
         const daysShort = ["So","Mo","Di","Mi","Do","Fr","Sa"];
@@ -240,7 +232,7 @@
                 const f = forecastFor(d, loc), card = document.createElement("div");
                 card.className = "day-card" + (sameDay(d, state.selected) ? " is-selected" : "");
                 card.innerHTML = `
-                    <h3>${sameDay(d, today) ? "Heute" : (i === 0 || sameDay(d, new Date(today.getTime()+864e5)) && sameDay(state.start, today) ? "Morgen" : daysShort[d.getDay()])}</h3>
+                    <h3>${sameDay(d, today) ? "Heute" : sameDay(d, new Date(today.getTime()+864e5)) ? "Morgen" : daysShort[d.getDay()]}</h3>
                     <div class="date">${d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}</div>
                     <div class="icon">${f.icon}</div>
                     <p class="temp">${fmt(f.temp)}</p>
@@ -279,13 +271,13 @@
                     <div>${isToday && x.h === nowH ? "Jetzt" : String(x.h).padStart(2,"0") + ":00"}</div>
                     <div class="i">${x.icon}</div><div class="t">${fmt(x.t)}</div><div style="color:#2a7a2a">0 %</div>
                 </div>`).join("");
-            if (isToday) { const n = hourlyEl.querySelector(".now"); n && n.scrollIntoView({ inline: "start", block: "nearest" }); }
+            if (isToday) { const n = hourlyEl.querySelector(".now"); if (n) hourlyEl.scrollLeft = n.offsetLeft - hourlyEl.offsetLeft; } else hourlyEl.scrollLeft = 0;
 
             $("header-title").textContent = `${f.icon} ${loc}`;
             $("updated").textContent = "aktualisiert " + today.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
             $("unit-btn").textContent = unitLabel();
             document.title = `Sonnenwetter – ${loc}`;
-            locationInput.value = loc;
+            if (document.activeElement !== locationInput) locationInput.value = loc;
             renderFavorites();
         }
 
@@ -312,8 +304,6 @@
         });
         $("apply-button").addEventListener("click", applyInputs);
         [locationInput, startDateInput].forEach(el => el.addEventListener("keydown", e => { if (e.key === "Enter") applyInputs(); }));
-        locationInput.addEventListener("change", () => { if (CITIES.includes(locationInput.value)) applyInputs(); });
-        locationInput.addEventListener("focus", () => locationInput.select());
 
         $("unit-btn").addEventListener("click", () => { state.unit = state.unit === "C" ? "F" : "C"; save(); render(); });
 
