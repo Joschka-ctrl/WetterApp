@@ -233,11 +233,14 @@
         const winds = ["Windstill","Laues Lüftchen","Leichte Brise","Angenehm frisch"];
 
         // ---- State ----
+        const params = new URLSearchParams(location.search);
+        const urlOrt = params.get("ort") || params.get("stadt") || params.get("q") || decodeURIComponent(location.hash.slice(1));
+        const urlDatum = params.get("datum") && !isNaN(new Date(params.get("datum") + "T12:00:00")) ? new Date(params.get("datum") + "T12:00:00") : null;
         let state = {
-            location: localStorage.getItem("sw-ort") || "Konstanz",
+            location: (urlOrt && urlOrt.trim()) || localStorage.getItem("sw-ort") || "Konstanz",
             unit: localStorage.getItem("sw-unit") || "C",
             favorites: JSON.parse(localStorage.getItem("sw-favs") || '["Konstanz","Berlin","Mallorca"]'),
-            selected: new Date(), start: new Date(),
+            selected: urlDatum || new Date(), start: urlDatum || new Date(),
         };
         const save = () => { try {
             localStorage.setItem("sw-ort", state.location); localStorage.setItem("sw-unit", state.unit);
@@ -300,7 +303,7 @@
                     <div class="date">Nachts ${fmt(f.low)}</div>
                     <p class="tagline">${f.tagline}</p>
                     <div class="rain">💧 0 % Regen</div>`;
-                card.addEventListener("click", () => { state.selected = d; render(); });
+                card.addEventListener("click", () => { state.selected = d; render(); syncUrl(); });
                 weatherContainer.appendChild(card);
             }
 
@@ -343,14 +346,21 @@
         };
 
         // ---- Aktionen ----
+        function shareUrl() {
+            const u = new URL(location.href); u.hash = ""; u.search = "";
+            u.searchParams.set("ort", state.location);
+            if (!sameDay(state.selected, new Date())) u.searchParams.set("datum", state.selected.toISOString().slice(0, 10));
+            return u.toString();
+        }
+        function syncUrl() { try { history.replaceState(null, "", shareUrl()); } catch(e) {} }
         function setLocation(loc) {
             loc = (loc || "").trim(); if (!loc) return;
-            state.location = loc.charAt(0).toUpperCase() + loc.slice(1); save(); render();
+            state.location = loc.charAt(0).toUpperCase() + loc.slice(1); save(); render(); syncUrl();
         }
         function applyInputs() {
             const d = new Date(startDateInput.value + "T12:00:00");
             if (!isNaN(d)) { state.start = d; state.selected = d; }
-            setLocation(locationInput.value || state.location);
+            setLocation(locationInput.value || state.location); syncUrl();
         }
         function toggleFav() {
             const i = state.favorites.indexOf(state.location);
@@ -386,8 +396,9 @@
             const f = forecastFor(state.selected, state.location);
             const text = `${f.icon} ${state.location}: ${fmt(f.temp)}${unitLabel()}, ${f.desc}, 0 % Regen. ${f.tagline}! – via Sonnenwetter`;
             try {
-                if (navigator.share) await navigator.share({ title: "Sonnenwetter", text, url: location.href });
-                else { await navigator.clipboard.writeText(text + " " + location.href); toast("In Zwischenablage kopiert"); }
+                const url = shareUrl();
+                if (navigator.share) await navigator.share({ title: "Sonnenwetter " + state.location, text, url });
+                else { await navigator.clipboard.writeText(text + " " + url); toast("Link kopiert"); }
             } catch {}
         });
 
@@ -456,9 +467,9 @@
         initGlobe();
 
         // ---- Start ----
-        const t = new Date();
+        const t = state.start;
         startDateInput.value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
-        render();
+        render(); syncUrl();
 
         if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
             navigator.serviceWorker.register("sw.js").catch(() => {});
